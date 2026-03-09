@@ -10,79 +10,96 @@
 
 ## Results Summary
 
-| # | Experiment | Spearman ρ | MSE | Params | Status | Key Change |
-|---|-----------|:----------:|:---:|:------:|--------|------------|
-| 1 | Baseline Transformer | -0.035 | 0.108 | 0.8M | keep | 4L/4H/128D, AdamW lr=1e-3 |
-| 2 | Smaller + regularized | 0.066 | 0.108 | 0.2M | keep | 64D, dropout=0.3, Huber loss |
-| 3 | CNN+attention hybrid | 0.319 | 0.131 | 0.1M | keep | 1D CNN + position-attention + multi-pool |
-| 4 | Multi-scale CNN | 0.177 | 0.111 | 0.2M | ❌ discard | Early stopping too aggressive |
-| 5 | Exp3 + tuned hyperparams | 0.394 | 0.146 | 0.1M | keep | LR=2e-4, wd=0.1, dropout=0.3 |
-| 6 | Very low LR | 0.289 | 0.098 | 0.1M | ❌ discard | LR=1e-4 too slow to learn |
-| 7 | Residual CNN + EMA | 0.378 | 0.331 | 0.1M | ❌ discard | EMA averaged over overfitting |
-| **8** | **Mutation-aware model** | **0.410** | **0.099** | **0.1M** | **✅ best** | **Explicit wt/mut delta + position features** |
+| # | Experiment | Spearman ρ | MSE | Params | Device | Status |
+|---|-----------|:----------:|:---:|:------:|:------:|--------|
+| 1 | Baseline Transformer | -0.035 | 0.108 | 0.8M | MPS | keep |
+| 2 | Smaller + regularized | 0.066 | 0.108 | 0.2M | MPS | keep |
+| 3 | CNN+attention hybrid | 0.319 | 0.131 | 0.1M | MPS | keep |
+| 4 | Multi-scale CNN | 0.177 | 0.111 | 0.2M | MPS | ❌ |
+| 5 | Tuned hyperparams | 0.394 | 0.146 | 0.1M | MPS | keep |
+| 6 | Very low LR | 0.289 | 0.098 | 0.1M | MPS | ❌ |
+| 7 | Residual CNN + EMA | 0.378 | 0.331 | 0.1M | MPS | ❌ |
+| 8 | Mutation-aware model | 0.410 | 0.099 | 0.1M | MPS | keep |
+| 9 (GPU) | Scaled 4M params | 0.279 | 0.147 | 4.0M | T4 | ❌ |
+| **9b (GPU)** | **0.7M + AMP + augment** | **0.464** | **0.114** | **0.7M** | **T4** | **✅ best** |
+| 10 (GPU) | AA properties + masking | 0.335 | 0.137 | 0.7M | T4 | ❌ |
 
 ---
 
 ## Key Insights
 
-1. **Transformers overfit badly** on small DMS datasets (4k samples). Simpler architectures (CNN+attention) are far better.
-2. **Checkpointing is critical** — models peak early then collapse from overfitting. Best-model checkpointing saves 0.2–0.4 Spearman ρ.
-3. **Explicit mutation features are the right inductive bias**: comparing input to wildtype, extracting (wt_emb, mut_emb, delta, position) as direct features gives the model what it needs without having to learn it implicitly.
-4. **LR sweet spot is 2e-4** — 5e-4 overfits too fast, 1e-4 learns too slow.
+1. **Small models > big models on small data.** With only 4k training samples, the best model is 0.7M params — NOT the 4M param version. The 4M model scored 0.279 vs 0.464.
+
+2. **Mutation-aware features are essential.** Explicitly detecting the mutation site (comparing to wildtype) and encoding (wt_emb, mut_emb, delta_emb, position_emb) as direct features gives the single biggest boost (+0.1 Spearman).
+
+3. **Checkpointing prevents catastrophic overfitting.** Without it, models peak early then collapse to negative correlations. The gap between peak and final can be >0.7 Spearman.
+
+4. **LR sweet spot = 2e-4.** Too high (5e-4) → fast overfitting. Too low (1e-4) → slow convergence. 
+
+5. **Light augmentation helps, heavy hurts.** Embedding noise (0.03) + 5% position masking improved results. But 10% masking destroyed signal.
+
+6. **GPU enables better throughput**, not bigger models. On T4 GPU: ~16ms/step (19k steps in 5 min) vs MPS: ~8ms/step for smaller model (36k in 5 min for 0.1M params). The key advantage is AMP mixed precision and more frequent checkpointing.
 
 ---
 
-## Best Architecture (Exp8)
+## Best Architecture (GPU Exp9b)
 
 ```
 Input: tokenized mutant sequence (B, 212)
   ├── Compare to wildtype → find mutation site
-  ├── Extract: wt_emb, mut_emb, delta_emb, pos_emb → MLP → (B, 64)
-  ├── Embed full seq → 3-layer 1D CNN → mean-pool + max-pool → (B, 128)
-  ├── Embed full seq → attention-weighted pool → (B, 32)
-  └── Embed full seq → global mean pool → (B, 32)
-Concat all → LayerNorm → MLP → scalar fitness prediction
+  ├── Extract: wt_emb + mut_emb + delta_emb + pos_emb → MLP → (B, 64)
+  ├── Embed seq → project to 128ch → 4x ResidualConvBlock(k=3) → mean+max pool → (B, 256)
+  ├── Embed seq → MultiheadAttn(4 heads, learned query) → (B, 64)
+  └── Embed seq → global mean pool → (B, 64)
+Concat → LayerNorm → MLP(256→64→1) → scalar fitness prediction
 
-Parameters: 0.1M (well under 10M limit)
-Spearman ρ: 0.410
+Parameters: 0.7M
+Spearman ρ: 0.464
+Training: 300s on T4 GPU, AMP mixed precision
+Augmentation: embedding noise (σ=0.03) + 5% random position masking
 ```
 
 ### Training Config
 - **Optimizer:** AdamW (lr=2e-4, β=(0.9, 0.999), wd=0.1)
 - **Loss:** Huber (δ=0.5)
-- **Dropout:** 0.3
+- **Dropout:** 0.35
 - **Batch size:** 64
 - **LR schedule:** cosine with 5% warmup
-- **Checkpointing:** every 600 steps, restore best val_spearman
+- **Checkpointing:** every 400 steps, restore best val_spearman
+- **Cost:** ~$0.03 per experiment on Modal T4
 
 ---
 
-## Project Structure
+## Cost Summary
 
-| File | Role | Modified by Agent? |
-|------|------|--------------------|
-| `prepare.py` | Data download, tokenization, dataloader, Spearman ρ eval | ❌ Read-only |
-| `train.py` | Model architecture, optimizer, training loop | ✅ Agent edits |
-| `program.md` | Autonomous research directive | ❌ Human edits |
-| `results.tsv` | Experiment log (tab-separated) | ✅ Agent appends |
+| Platform | GPU | Per Run Cost | Speed |
+|----------|-----|:------------:|:-----:|
+| Local MPS | Apple M-series | Free | ~8ms/step (0.1M model) |
+| Modal T4 | NVIDIA T4 | ~$0.03 | ~16ms/step (0.7M model) |
+| Modal A10G | NVIDIA A10G | ~$0.05 | ~5ms/step (est.) |
+
+Total GPU spend for 3 experiments: **~$0.10**
 
 ---
 
-## Dataset
+## Files
 
-- **Source:** Bloom Lab (`jbloomlab/SARS-CoV-2-RBD_DMS`)
-- **Target:** ACE2 binding fitness (`bind_avg`)
-- **Total mutations:** 4,003
-- **Unique sites:** 201
-- **Train/Val split:** 80/20 by site (no data leakage)
-- **Binding score range:** [-4.84, 0.30]
+| File | Role |
+|------|------|
+| `prepare.py` | Data download, tokenization, dataloader, Spearman ρ eval (read-only) |
+| `train.py` | Model architecture, optimizer, training loop (agent edits) |
+| `program.md` | Autonomous research directive |
+| `modal_runner.py` | GPU runner for Modal cloud |
+| `results.tsv` | Experiment log |
+| `report_small.md` | This report |
 
 ---
 
 ## Next Steps
 
-- Scale up model toward 10M param budget (currently only 0.1M — 100× headroom)
-- Try multi-task learning (predict both binding + expression)
-- Add physicochemical AA features (hydrophobicity, charge, volume)
-- Run on GPU via Modal for faster iteration cycles
-- Benchmark against ESM-3 zero-shot predictions on same dataset
+- Explore multi-task learning (predict binding + expression jointly)
+- Try contrastive learning: pairs of (more fit, less fit) mutations
+- Add secondary structure features from AlphaFold predictions
+- Ensemble top-3 checkpoints from training
+- Benchmark against ESM-3 zero-shot predictions
+- Scale dataset: include HA influenza DMS data for transfer learning
