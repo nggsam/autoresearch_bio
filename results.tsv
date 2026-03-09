@@ -1,0 +1,12 @@
+commit	val_spearman	val_mse	memory_mb	status	description
+e7c1724	-0.034501	0.108201	13.9	keep	baseline (4L 4H 128D transformer, AdamW lr=1e-3)
+87fe63e	0.066485	0.108392	4.8	keep	smaller (64D 0.2M), dropout=0.3, wd=0.1, Huber loss, checkpointing
+ef7e267	0.319252	0.130886	3.3	keep	CNN+attention hybrid, multi-pool, 0.1M params
+1ef5385	0.177476	0.110894	6.6	discard	multi-scale CNN + early stopping, stopped too early
+af16283	0.394473	0.146460	3.3	keep	Exp3 arch + LR=2e-4, wd=0.1, dropout=0.3
+cfcbada	0.288974	0.098446	3.3	discard	LR=1e-4 too slow, label noise didn't help
+d1072ab	0.377914	0.331020	3.3	discard	residual CNN + EMA, didn't beat Exp5
+6e1bcdf	0.410166	0.098835	3.3	keep	mutation-aware: explicit wt/mut delta + position features
+7e44200	0.279248	0.146931	846.4	discard	GPU: 4M params overfits massively on 4k samples
+f5ea7a6	0.464319	0.113518	129.8	keep	GPU: 0.7M model + AMP + emb noise + pos masking + residual CNN
+98a2faf	0.334591	0.136903	129.9	discard	AA properties + 10% masking too aggressive
