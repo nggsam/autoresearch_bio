@@ -1,9 +1,10 @@
 """
 Autoresearch_bio training script. Single-file, single-device.
-Experiment 5: Exp3 architecture with tuned hyperparams to reduce overfitting.
+Experiment 8: explicit mutation-site features + CNN + attention.
 
-Changes: lower LR (2e-4), higher wd (0.1), higher dropout (0.3),
-less frequent checkpointing (every 600 steps).
+Key idea: compare input sequence to wildtype to find the mutation
+position, then extract (position, wt_aa, mut_aa, delta_embedding)
+as explicit features alongside the CNN/attention features.
 
 Usage: python train.py
 """
@@ -20,6 +21,7 @@ import torch.nn.functional as F
 
 from prepare import (
     make_dataloader, evaluate_model, VOCAB_SIZE, SEQ_LEN, TIME_BUDGET,
+    WILDTYPE_RBD, AA_TO_IDX, START_TOKEN,
 )
 
 # ---------------------------------------------------------------------------
@@ -42,48 +44,47 @@ print(f"Device: {device}")
 # ---------------------------------------------------------------------------
 
 N_EMBD = 32          # AA embedding dimension
-CONTEXT_K = 20       # context window: K residues each side of mutation
 N_CNN_CHANNELS = 64  # CNN feature channels
-N_CNN_LAYERS = 3     # number of CNN layers
+N_CNN_LAYERS = 3     # CNN depth
 N_HIDDEN = 128       # MLP hidden dimension
-DROPOUT = 0.3        # higher dropout to combat overfitting
+DROPOUT = 0.3
 BATCH_SIZE = 64
 
 # Optimization
-LEARNING_RATE = 2e-4   # lower LR to slow overfitting
-WEIGHT_DECAY = 0.1     # stronger weight decay
+LEARNING_RATE = 2e-4
+WEIGHT_DECAY = 0.1
 WARMUP_RATIO = 0.05
 ADAM_BETAS = (0.9, 0.999)
 
+# Precompute wildtype token IDs (without START)
+WT_TOKENS = torch.tensor(
+    [AA_TO_IDX.get(aa, 0) for aa in WILDTYPE_RBD],
+    dtype=torch.long,
+)
 
-class LocalContextModel(nn.Module):
+
+class MutationAwareModel(nn.Module):
     """
-    Mutation fitness predictor using local sequence context.
+    Mutation fitness predictor with explicit mutation-site features.
 
-    Architecture:
-    1. Embed the full sequence with learned AA embeddings
-    2. Extract a local window around the mutation site
-    3. Process local context with 1D CNN (captures residue interactions)
-    4. Combine with mutation-specific features (position, wt/mut identity)
-    5. MLP regression head
+    The model:
+    1. Compares input seq to wildtype → finds mutation position
+    2. Extracts mutation-specific features (wt_emb, mut_emb, delta, position)
+    3. Processes full sequence with 1D CNN for context
+    4. Combines all features into MLP regression head
 
-    Key insight: For single-point mutations, the local biochemical
-    context around the mutation site matters far more than distant
-    residues. This eliminates the need for expensive full-sequence
-    attention and dramatically reduces overfitting.
+    This gives the model direct access to WHAT changed and WHERE,
+    instead of having to discover it implicitly.
     """
 
     def __init__(self):
         super().__init__()
 
-        # Amino acid embeddings
+        # AA embeddings (shared between sequence encoding and mutation features)
         self.aa_emb = nn.Embedding(VOCAB_SIZE, N_EMBD)
-
-        # Position embedding (to know WHERE in the protein the mutation is)
         self.pos_emb = nn.Embedding(SEQ_LEN + 1, N_EMBD)
 
-        # 1D CNN for local context window
-        context_len = 2 * CONTEXT_K + 1  # window size
+        # 1D CNN for sequence context
         cnn_layers = []
         in_ch = N_EMBD
         for i in range(N_CNN_LAYERS):
@@ -97,16 +98,27 @@ class LocalContextModel(nn.Module):
             in_ch = out_ch
         self.cnn = nn.Sequential(*cnn_layers)
 
-        # Global average pool over context window → single vector
-        # Plus mutation-specific features
-        # CNN output: N_CNN_CHANNELS
-        # Mutation position embedding: N_EMBD
-        # Wildtype AA embedding: N_EMBD
-        # Mutant AA embedding: N_EMBD
-        combined_dim = N_CNN_CHANNELS + 3 * N_EMBD
+        # Attention pooling query
+        self.attn_query = nn.Linear(N_EMBD, 1)
 
-        # MLP head
+        # Mutation-specific feature encoder
+        # Features: wt_emb, mut_emb, delta_emb, position_emb = 4 * N_EMBD
+        self.mutation_encoder = nn.Sequential(
+            nn.Linear(4 * N_EMBD, N_HIDDEN),
+            nn.GELU(),
+            nn.Dropout(DROPOUT),
+            nn.Linear(N_HIDDEN, N_HIDDEN // 2),
+        )
+
+        # Combined features:
+        # CNN (mean + max): 2 * N_CNN_CHANNELS
+        # Attention-pooled: N_EMBD
+        # Global mean: N_EMBD
+        # Mutation features: N_HIDDEN // 2
+        combined_dim = 2 * N_CNN_CHANNELS + 2 * N_EMBD + N_HIDDEN // 2
+
         self.head = nn.Sequential(
+            nn.LayerNorm(combined_dim),
             nn.Linear(combined_dim, N_HIDDEN),
             nn.GELU(),
             nn.Dropout(DROPOUT),
@@ -130,63 +142,67 @@ class LocalContextModel(nn.Module):
                     nn.init.zeros_(module.bias)
             elif isinstance(module, nn.Embedding):
                 nn.init.normal_(module.weight, std=0.1)
-            elif isinstance(module, (nn.LayerNorm, nn.BatchNorm1d)):
-                nn.init.ones_(module.weight)
-                nn.init.zeros_(module.bias)
 
     def forward(self, x):
-        """
-        Args:
-            x: (B, seq_len) integer token IDs
-               x[:, 0] is START token
-               x[:, 1:] is the (possibly mutated) protein sequence
-        """
         B, T = x.shape
+        seq = x[:, 1:]  # skip START, (B, SEQ_LEN)
 
-        # Find mutation position by comparing to wildtype
-        # The mutated position is where the sequence differs from others
-        # For now, we embed the FULL sequence and use attention to find
-        # important positions. Alternative: pass mutation position explicitly.
+        # --- Mutation detection ---
+        # Compare to wildtype to find mutation position
+        wt = WT_TOKENS.to(seq.device).unsqueeze(0).expand(B, -1)  # (B, SEQ_LEN)
+        # Pad wt if needed to match seq length
+        if wt.size(1) < seq.size(1):
+            wt = F.pad(wt, (0, seq.size(1) - wt.size(1)))
+        elif wt.size(1) > seq.size(1):
+            wt = wt[:, :seq.size(1)]
 
-        # Embed all tokens
-        emb = self.aa_emb(x[:, 1:])  # (B, SEQ_LEN, N_EMBD), skip START
+        diff_mask = (seq != wt)  # (B, SEQ_LEN) - True at mutation sites
 
-        # For each sample, we need to find where the mutation is.
-        # Since all samples share the same wildtype, the mutation site
-        # is where this sequence differs from wildtype.
-        # But we process a batch, so we need a general approach.
+        # Get mutation position (first differing position)
+        # If no diff found (wildtype sequence), default to position 0
+        mut_pos = diff_mask.float().argmax(dim=1)  # (B,)
+        mut_pos_long = mut_pos.long()
 
-        # Strategy: use the full embedded sequence, but weight it
-        # by a learned positional importance + local CNN
+        # Extract wildtype and mutant AA at mutation position
+        wt_aa = wt.gather(1, mut_pos_long.unsqueeze(1)).squeeze(1)  # (B,)
+        mut_aa = seq.gather(1, mut_pos_long.unsqueeze(1)).squeeze(1)  # (B,)
 
-        # Global: mean-pool the full sequence embedding
-        global_feat = emb.mean(dim=1)  # (B, N_EMBD)
+        # Mutation-specific features
+        wt_emb_feat = self.aa_emb(wt_aa)        # (B, N_EMBD)
+        mut_emb_feat = self.aa_emb(mut_aa)       # (B, N_EMBD)
+        delta_emb = mut_emb_feat - wt_emb_feat   # (B, N_EMBD)
+        pos_emb_feat = self.pos_emb(mut_pos_long) # (B, N_EMBD)
 
-        # Local CNN: process the full sequence with CNN to capture
-        # local interactions, then global average pool
-        cnn_in = emb.permute(0, 2, 1)  # (B, N_EMBD, SEQ_LEN)
-        cnn_out = self.cnn(cnn_in)     # (B, N_CNN_CHANNELS, SEQ_LEN)
-        cnn_pooled = cnn_out.mean(dim=2)  # (B, N_CNN_CHANNELS)
+        mut_features = torch.cat([wt_emb_feat, mut_emb_feat, delta_emb, pos_emb_feat], dim=-1)
+        mut_encoded = self.mutation_encoder(mut_features)  # (B, N_HIDDEN//2)
 
-        # Position-weighted features: use position embeddings as attention
-        pos_ids = torch.arange(T - 1, device=x.device).unsqueeze(0)  # (1, SEQ_LEN)
-        pos_emb = self.pos_emb(pos_ids)  # (1, SEQ_LEN, N_EMBD)
+        # --- Sequence context features ---
+        emb = self.aa_emb(seq)  # (B, SEQ_LEN, N_EMBD)
 
-        # Attention weights from position embeddings
-        attn_logits = (emb * pos_emb).sum(dim=-1)  # (B, SEQ_LEN)
-        attn_weights = F.softmax(attn_logits, dim=-1)  # (B, SEQ_LEN)
-        attended = (emb * attn_weights.unsqueeze(-1)).sum(dim=1)  # (B, N_EMBD)
+        # CNN
+        cnn_in = emb.permute(0, 2, 1)
+        cnn_out = self.cnn(cnn_in)
+        cnn_mean = cnn_out.mean(dim=2)
+        cnn_max = cnn_out.max(dim=2).values
 
-        # Combine features
+        # Attention-weighted pooling
+        attn_logits = self.attn_query(emb).squeeze(-1)
+        attn_weights = F.softmax(attn_logits, dim=-1)
+        attn_pooled = (emb * attn_weights.unsqueeze(-1)).sum(dim=1)
+
+        # Global mean
+        global_mean = emb.mean(dim=1)
+
+        # --- Combine all features ---
         combined = torch.cat([
-            cnn_pooled,       # local context features
-            global_feat,      # global sequence features
-            attended,         # position-attended features
-            emb.max(dim=1).values,  # max-pool features
-        ], dim=-1)  # (B, N_CNN_CHANNELS + 3*N_EMBD)
+            cnn_mean,
+            cnn_max,
+            attn_pooled,
+            global_mean,
+            mut_encoded,
+        ], dim=-1)
 
-        out = self.head(combined)
-        return out
+        return self.head(combined)
 
     def num_params(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
@@ -203,7 +219,7 @@ def main():
 
     t_start = time.time()
 
-    model = LocalContextModel()
+    model = MutationAwareModel()
     model = model.to(device)
 
     num_params = model.num_params()
@@ -294,7 +310,7 @@ def main():
                     end="", flush=True,
                 )
 
-            # Mid-training eval every 400 steps
+            # Mid-training eval every 600 steps
             if step > 10 and step % 600 == 0 and total_training_time < TIME_BUDGET * 0.95:
                 model.eval()
                 mid_results = evaluate_model(model, device, batch_size=BATCH_SIZE)
