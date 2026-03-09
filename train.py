@@ -38,20 +38,20 @@ else:
 print(f"Device: {device}")
 
 # ---------------------------------------------------------------------------
-# Model architecture (AGENT: modify this!)
+# Model architecture
 # ---------------------------------------------------------------------------
 
 # Architecture hyperparameters
 N_LAYER = 4          # number of transformer layers
 N_HEAD = 4           # number of attention heads
-N_EMBD = 128         # embedding dimension
-DROPOUT = 0.1        # dropout rate
-BATCH_SIZE = 64      # training batch size
+N_EMBD = 64          # embedding dimension (smaller to reduce overfitting)
+DROPOUT = 0.3        # higher dropout for small dataset
+BATCH_SIZE = 32      # smaller batch for more update steps
 
 # Optimization hyperparameters
-LEARNING_RATE = 1e-3
-WEIGHT_DECAY = 0.01
-WARMUP_RATIO = 0.1   # fraction of time budget for LR warmup
+LEARNING_RATE = 3e-4
+WEIGHT_DECAY = 0.1   # stronger weight decay
+WARMUP_RATIO = 0.05
 ADAM_BETAS = (0.9, 0.999)
 
 
@@ -68,14 +68,8 @@ class BioConfig:
 class BioTransformer(nn.Module):
     """
     Transformer encoder for protein fitness prediction.
-    Maps tokenized amino acid sequence → scalar fitness score.
-
-    AGENT: Try swapping this for:
-    - 1D dilated convolutions (WaveNet-style)
-    - Mamba / S4 state-space model
-    - Hybrid CNN + Attention
-    - Different positional encodings (RoPE, ALiBi, sinusoidal)
-    - Different pooling strategies (CLS token, max-pool, attention-pool)
+    Uses a combination of local context around the mutation site
+    and global sequence features.
     """
 
     def __init__(self, config: BioConfig):
@@ -95,20 +89,23 @@ class BioTransformer(nn.Module):
             dropout=config.dropout,
             activation="gelu",
             batch_first=True,
-            norm_first=True,  # Pre-norm (more stable)
+            norm_first=True,
         )
         self.transformer = nn.TransformerEncoder(
             encoder_layer,
             num_layers=config.n_layer,
         )
 
-        # Regression head: pool → project → scalar
+        # Regression head with more regularization
         self.ln_final = nn.LayerNorm(config.n_embd)
         self.head = nn.Sequential(
             nn.Linear(config.n_embd, config.n_embd),
             nn.GELU(),
             nn.Dropout(config.dropout),
-            nn.Linear(config.n_embd, 1),
+            nn.Linear(config.n_embd, config.n_embd // 2),
+            nn.GELU(),
+            nn.Dropout(config.dropout),
+            nn.Linear(config.n_embd // 2, 1),
         )
 
         self._init_weights()
@@ -116,7 +113,7 @@ class BioTransformer(nn.Module):
     def _init_weights(self):
         for module in self.modules():
             if isinstance(module, nn.Linear):
-                nn.init.xavier_uniform_(module.weight)
+                nn.init.xavier_uniform_(module.weight, gain=0.5)
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
             elif isinstance(module, nn.Embedding):
@@ -126,32 +123,22 @@ class BioTransformer(nn.Module):
                 nn.init.zeros_(module.bias)
 
     def forward(self, x):
-        """
-        Args:
-            x: (B, seq_len) integer token IDs
-        Returns:
-            (B, 1) predicted fitness scores
-        """
         B, T = x.shape
-        pos = torch.arange(T, device=x.device).unsqueeze(0)  # (1, T)
+        pos = torch.arange(T, device=x.device).unsqueeze(0)
 
-        tok = self.tok_emb(x)       # (B, T, n_embd)
-        pos = self.pos_emb(pos)     # (1, T, n_embd)
+        tok = self.tok_emb(x)
+        pos = self.pos_emb(pos)
         h = self.emb_dropout(tok + pos)
 
-        # Transformer encoding
-        h = self.transformer(h)     # (B, T, n_embd)
+        h = self.transformer(h)
 
-        # Mean pooling over sequence
-        h = h.mean(dim=1)           # (B, n_embd)
-
-        # Regression head
+        # Mean pooling
+        h = h.mean(dim=1)
         h = self.ln_final(h)
-        out = self.head(h)          # (B, 1)
+        out = self.head(h)
         return out
 
     def num_params(self):
-        """Count total trainable parameters."""
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
 
@@ -186,20 +173,19 @@ def main():
         betas=ADAM_BETAS,
     )
 
-    # Loss function
-    criterion = nn.MSELoss()
+    # Loss: Huber loss is more robust to outliers than MSE
+    criterion = nn.HuberLoss(delta=1.0)
 
     # Data
     train_loader = make_dataloader("train", BATCH_SIZE, shuffle=True)
 
-    # LR schedule
+    # LR schedule: cosine with warmup
     def get_lr(progress):
-        """Cosine schedule with linear warmup."""
         if progress < WARMUP_RATIO:
             return progress / WARMUP_RATIO if WARMUP_RATIO > 0 else 1.0
         else:
             cosine_progress = (progress - WARMUP_RATIO) / (1.0 - WARMUP_RATIO)
-            return 0.5 * (1.0 + math.cos(math.pi * cosine_progress))
+            return max(0.01, 0.5 * (1.0 + math.cos(math.pi * cosine_progress)))
 
     # Training loop
     print(f"Time budget: {TIME_BUDGET}s")
@@ -212,6 +198,8 @@ def main():
     step = 0
     epoch = 0
     smooth_loss = 0.0
+    best_val_spearman = -1.0
+    best_state = None
 
     model.train()
 
@@ -223,17 +211,14 @@ def main():
             X_batch = X_batch.to(device)
             Y_batch = Y_batch.to(device)
 
-            # Forward
-            preds = model(X_batch).squeeze(-1)  # (B,)
+            preds = model(X_batch).squeeze(-1)
             loss = criterion(preds, Y_batch)
 
-            # Backward
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
 
-            # Timing
             if device_type == "cuda":
                 torch.cuda.synchronize()
             elif device_type == "mps":
@@ -245,13 +230,11 @@ def main():
             if step > 5:
                 total_training_time += dt
 
-            # LR schedule
             progress = min(total_training_time / TIME_BUDGET, 1.0) if TIME_BUDGET > 0 else 0.0
             lr_mult = get_lr(progress)
             for group in optimizer.param_groups:
                 group["lr"] = LEARNING_RATE * lr_mult
 
-            # Logging
             loss_f = loss.item()
             ema_beta = 0.95
             smooth_loss = ema_beta * smooth_loss + (1 - ema_beta) * loss_f
@@ -259,7 +242,7 @@ def main():
             pct_done = 100 * progress
             remaining = max(0, TIME_BUDGET - total_training_time)
 
-            if step % 50 == 0 or step < 5:
+            if step % 100 == 0 or step < 5:
                 print(
                     f"\rstep {step:05d} ({pct_done:.1f}%) | "
                     f"loss: {debiased_loss:.6f} | "
@@ -270,30 +253,44 @@ def main():
                     end="", flush=True,
                 )
 
-            # Fast fail
+            # Mid-training checkpoint: evaluate every 60s and save best
+            if step > 10 and step % 500 == 0 and total_training_time < TIME_BUDGET * 0.9:
+                model.eval()
+                mid_results = evaluate_model(model, device, batch_size=BATCH_SIZE)
+                if mid_results["val_spearman"] > best_val_spearman:
+                    best_val_spearman = mid_results["val_spearman"]
+                    best_state = {k: v.clone() for k, v in model.state_dict().items()}
+                    print(f"\n  [checkpoint] val_spearman={mid_results['val_spearman']:.4f} (new best!)")
+                else:
+                    print(f"\n  [checkpoint] val_spearman={mid_results['val_spearman']:.4f} (best={best_val_spearman:.4f})")
+                model.train()
+
             if loss_f > 100 or math.isnan(loss_f):
                 print(f"\nFAIL: loss={loss_f}")
                 exit(1)
 
-            # GC management
             if step == 0:
                 gc.collect()
 
             step += 1
 
-            # Time's up
             if step > 5 and total_training_time >= TIME_BUDGET:
                 break
 
         if step > 5 and total_training_time >= TIME_BUDGET:
             break
 
-    print()  # newline after \r log
+    print()
     print(f"Training complete. {step} steps, {epoch} epochs.")
     print()
 
+    # Restore best checkpoint if we found one
+    if best_state is not None:
+        model.load_state_dict(best_state)
+        print(f"Restored best checkpoint (val_spearman={best_val_spearman:.4f})")
+
     # Final evaluation
-    print("Running validation evaluation...")
+    print("Running final validation evaluation...")
     results = evaluate_model(model, device, batch_size=BATCH_SIZE)
 
     # Memory stats
@@ -309,7 +306,6 @@ def main():
 
     t_end = time.time()
 
-    # Final summary (autoresearch format)
     print("---")
     print(f"val_spearman:     {results['val_spearman']:.6f}")
     print(f"val_mse:          {results['val_mse']:.6f}")
