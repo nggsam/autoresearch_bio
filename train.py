@@ -1,11 +1,9 @@
 """
 Autoresearch_bio training script. Single-file, single-device.
-Experiment 3: Hybrid local-context model.
+Experiment 5: Exp3 architecture with tuned hyperparams to reduce overfitting.
 
-Instead of full-sequence Transformer, use:
-1. Mutation-specific features (position, wt/mut AA embeddings)
-2. Local context window (k=15 residues each side of mutation)
-3. Small 1D CNN for local context + MLP head
+Changes: lower LR (2e-4), higher wd (0.1), higher dropout (0.3),
+less frequent checkpointing (every 600 steps).
 
 Usage: python train.py
 """
@@ -48,12 +46,12 @@ CONTEXT_K = 20       # context window: K residues each side of mutation
 N_CNN_CHANNELS = 64  # CNN feature channels
 N_CNN_LAYERS = 3     # number of CNN layers
 N_HIDDEN = 128       # MLP hidden dimension
-DROPOUT = 0.2
+DROPOUT = 0.3        # higher dropout to combat overfitting
 BATCH_SIZE = 64
 
 # Optimization
-LEARNING_RATE = 5e-4
-WEIGHT_DECAY = 0.05
+LEARNING_RATE = 2e-4   # lower LR to slow overfitting
+WEIGHT_DECAY = 0.1     # stronger weight decay
 WARMUP_RATIO = 0.05
 ADAM_BETAS = (0.9, 0.999)
 
@@ -297,7 +295,7 @@ def main():
                 )
 
             # Mid-training eval every 400 steps
-            if step > 10 and step % 400 == 0 and total_training_time < TIME_BUDGET * 0.9:
+            if step > 10 and step % 600 == 0 and total_training_time < TIME_BUDGET * 0.95:
                 model.eval()
                 mid_results = evaluate_model(model, device, batch_size=BATCH_SIZE)
                 sp = mid_results["val_spearman"]
