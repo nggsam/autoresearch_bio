@@ -1,13 +1,10 @@
 """
 Autoresearch_bio training script. Single-file, single-device.
-Scaled-up mutation-aware model (~5M params) for GPU training.
+GPU Exp9: Mutation-aware model (Exp8 base) with GPU-specific optimizations.
 
-Architecture: Exp8 mutation-aware model scaled up:
-- Embeddings: 128D (was 32D)
-- CNN channels: 256 (was 64)
-- CNN depth: 5 layers (was 3)
-- Multi-head attention layer (4 heads)
-- Larger MLP head with residual connections
+Key insight: 4M params overfits on 4k samples. Keep ~0.5M params but
+leverage GPU speed for: heavier augmentation, more eval checkpoints,
+mixed precision training, and torch.compile.
 
 Usage: python train.py
 """
@@ -43,20 +40,22 @@ else:
 print(f"Device: {device}")
 
 # ---------------------------------------------------------------------------
-# Model architecture — SCALED UP for GPU
+# Model architecture — optimized for ~0.5M params
 # ---------------------------------------------------------------------------
 
-N_EMBD = 128          # AA embedding dimension (4x larger)
-N_CNN_CHANNELS = 256  # CNN feature channels (4x larger)
-N_CNN_LAYERS = 5      # CNN depth (deeper)
+N_EMBD = 64           # AA embedding dimension
+N_CNN_CHANNELS = 128  # CNN feature channels
+N_CNN_LAYERS = 4      # CNN depth
 N_ATTN_HEADS = 4      # multi-head attention
-N_HIDDEN = 512        # MLP hidden dimension (4x larger)
-DROPOUT = 0.25        # slightly less dropout — more params need less regularization
-BATCH_SIZE = 128      # larger batch on GPU
+N_HIDDEN = 256        # MLP hidden dimension
+DROPOUT = 0.35        # heavier dropout for small dataset
+EMB_NOISE = 0.03      # Gaussian noise on embeddings
+BATCH_SIZE = 64       # moderate batch
+MASK_PROB = 0.05      # randomly mask positions during training
 
 # Optimization
-LEARNING_RATE = 3e-4   # slightly higher LR for bigger model
-WEIGHT_DECAY = 0.05
+LEARNING_RATE = 2e-4
+WEIGHT_DECAY = 0.1
 WARMUP_RATIO = 0.05
 ADAM_BETAS = (0.9, 0.999)
 
@@ -68,7 +67,7 @@ WT_TOKENS = torch.tensor(
 
 
 class ResidualConvBlock(nn.Module):
-    """Conv1d block with residual connection and pre-norm."""
+    """Conv1d with residual connection."""
     def __init__(self, channels, dropout, kernel_size=3):
         super().__init__()
         self.norm = nn.BatchNorm1d(channels)
@@ -85,37 +84,30 @@ class ResidualConvBlock(nn.Module):
 
 class MutationAwareModel(nn.Module):
     """
-    Scaled-up mutation fitness predictor (~5M params).
+    Mutation fitness predictor (~0.5M params, GPU-optimized).
 
-    Changes from 0.1M version:
-    - 128D embeddings (was 32D)
-    - 256-channel CNN with residual blocks (was 64-channel plain)
-    - Multi-head attention pooling (4 heads)
-    - Deeper MLP head with residual connection
-    - Separate mutation encoder is larger
+    Architecture:
+    - Mutation detection via wildtype comparison
+    - Explicit mutation features (wt/mut/delta/position embeddings)
+    - Deep residual 1D CNN for sequence context
+    - Multi-head attention pooling (learned query)
+    - Deep MLP regression head
+    - Data augmentation: embedding noise + random position masking
     """
 
     def __init__(self):
         super().__init__()
 
-        # AA embeddings (larger)
         self.aa_emb = nn.Embedding(VOCAB_SIZE, N_EMBD)
         self.pos_emb = nn.Embedding(SEQ_LEN + 1, N_EMBD)
 
-        # Initial projection to CNN channel dimension
+        # CNN: project up then residual blocks
         self.input_proj = nn.Conv1d(N_EMBD, N_CNN_CHANNELS, 1)
-
-        # Deep residual 1D CNN
         self.cnn_blocks = nn.ModuleList([
-            ResidualConvBlock(N_CNN_CHANNELS, DROPOUT, kernel_size=3)
+            ResidualConvBlock(N_CNN_CHANNELS, DROPOUT)
             for _ in range(N_CNN_LAYERS)
         ])
-        # Also add a wider-kernel pass for regional context
-        self.cnn_wide = nn.Sequential(
-            nn.Conv1d(N_CNN_CHANNELS, N_CNN_CHANNELS // 2, kernel_size=11, padding=5),
-            nn.BatchNorm1d(N_CNN_CHANNELS // 2),
-            nn.GELU(),
-        )
+        self.cnn_norm = nn.BatchNorm1d(N_CNN_CHANNELS)
 
         # Multi-head attention pooling
         self.mha = nn.MultiheadAttention(
@@ -124,43 +116,26 @@ class MutationAwareModel(nn.Module):
         )
         self.attn_query = nn.Parameter(torch.randn(1, 1, N_EMBD) * 0.02)
 
-        # Mutation-specific feature encoder (larger)
-        # Input: wt_emb + mut_emb + delta_emb + pos_emb = 4 * N_EMBD
+        # Mutation encoder
         self.mutation_encoder = nn.Sequential(
             nn.Linear(4 * N_EMBD, N_HIDDEN),
             nn.GELU(),
             nn.Dropout(DROPOUT),
-            nn.Linear(N_HIDDEN, N_HIDDEN // 2),
-            nn.GELU(),
-            nn.Dropout(DROPOUT),
-            nn.Linear(N_HIDDEN // 2, N_HIDDEN // 4),
+            nn.Linear(N_HIDDEN, N_HIDDEN // 4),
         )
 
-        # Combined features:
-        # CNN mean + max: N_CNN_CHANNELS * 2
-        # CNN wide mean: N_CNN_CHANNELS // 2
+        # Combined dim:
+        # CNN mean + max: 2 * N_CNN_CHANNELS
         # MHA pooled: N_EMBD
         # Global mean: N_EMBD
-        # Mutation features: N_HIDDEN // 4
-        combined_dim = (
-            N_CNN_CHANNELS * 2
-            + N_CNN_CHANNELS // 2
-            + N_EMBD * 2
-            + N_HIDDEN // 4
-        )
+        # Mutation: N_HIDDEN // 4
+        combined_dim = 2 * N_CNN_CHANNELS + 2 * N_EMBD + N_HIDDEN // 4
 
-        # Deep MLP head with residual
-        self.head_norm = nn.LayerNorm(combined_dim)
-        self.head_proj = nn.Linear(combined_dim, N_HIDDEN)
-        self.head_residual = nn.Sequential(
-            nn.LayerNorm(N_HIDDEN),
-            nn.Linear(N_HIDDEN, N_HIDDEN),
+        self.head = nn.Sequential(
+            nn.LayerNorm(combined_dim),
+            nn.Linear(combined_dim, N_HIDDEN),
             nn.GELU(),
             nn.Dropout(DROPOUT),
-            nn.Linear(N_HIDDEN, N_HIDDEN),
-        )
-        self.head_final = nn.Sequential(
-            nn.LayerNorm(N_HIDDEN),
             nn.Linear(N_HIDDEN, N_HIDDEN // 4),
             nn.GELU(),
             nn.Dropout(DROPOUT),
@@ -180,13 +155,13 @@ class MutationAwareModel(nn.Module):
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
             elif isinstance(module, nn.Embedding):
-                nn.init.normal_(module.weight, std=0.02)
+                nn.init.normal_(module.weight, std=0.05)
 
     def forward(self, x):
         B, T = x.shape
-        seq = x[:, 1:]  # skip START
+        seq = x[:, 1:]
 
-        # --- Mutation detection ---
+        # Mutation detection
         wt = WT_TOKENS.to(seq.device).unsqueeze(0).expand(B, -1)
         if wt.size(1) < seq.size(1):
             wt = F.pad(wt, (0, seq.size(1) - wt.size(1)))
@@ -204,47 +179,44 @@ class MutationAwareModel(nn.Module):
         mut_emb_feat = self.aa_emb(mut_aa)
         delta_emb = mut_emb_feat - wt_emb_feat
         pos_emb_feat = self.pos_emb(mut_pos)
-
         mut_features = torch.cat([wt_emb_feat, mut_emb_feat, delta_emb, pos_emb_feat], dim=-1)
         mut_encoded = self.mutation_encoder(mut_features)
 
-        # --- Sequence features ---
-        emb = self.aa_emb(seq)  # (B, SEQ_LEN, N_EMBD)
+        # Sequence embedding
+        emb = self.aa_emb(seq)
         pos = torch.arange(seq.size(1), device=seq.device).unsqueeze(0)
         emb = emb + self.pos_emb(pos)
 
-        # Deep residual CNN
-        cnn_in = self.input_proj(emb.permute(0, 2, 1))  # (B, C, SEQ_LEN)
+        # Data augmentation during training
+        if self.training:
+            if EMB_NOISE > 0:
+                emb = emb + torch.randn_like(emb) * EMB_NOISE
+            if MASK_PROB > 0:
+                mask = torch.rand(B, seq.size(1), 1, device=emb.device) > MASK_PROB
+                emb = emb * mask
+
+        # Residual CNN
+        cnn_in = self.input_proj(emb.permute(0, 2, 1))
         for block in self.cnn_blocks:
             cnn_in = block(cnn_in)
+        cnn_in = self.cnn_norm(cnn_in)
         cnn_mean = cnn_in.mean(dim=2)
         cnn_max = cnn_in.max(dim=2).values
 
-        # Wide CNN for regional context
-        cnn_wide_out = self.cnn_wide(cnn_in)
-        cnn_wide_mean = cnn_wide_out.mean(dim=2)
-
         # Multi-head attention pooling
-        query = self.attn_query.expand(B, -1, -1)  # (B, 1, N_EMBD)
-        attn_out, _ = self.mha(query, emb, emb)  # (B, 1, N_EMBD)
-        attn_pooled = attn_out.squeeze(1)  # (B, N_EMBD)
+        query = self.attn_query.expand(B, -1, -1)
+        attn_out, _ = self.mha(query, emb, emb)
+        attn_pooled = attn_out.squeeze(1)
 
         # Global mean
         global_mean = emb.mean(dim=1)
 
-        # --- Combine ---
+        # Combine
         combined = torch.cat([
-            cnn_mean, cnn_max,
-            cnn_wide_mean,
-            attn_pooled,
-            global_mean,
-            mut_encoded,
+            cnn_mean, cnn_max, attn_pooled, global_mean, mut_encoded
         ], dim=-1)
 
-        # Deep MLP head with residual
-        h = F.gelu(self.head_proj(self.head_norm(combined)))
-        h = h + self.head_residual(h)
-        return self.head_final(h)
+        return self.head(combined)
 
     def num_params(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
@@ -270,9 +242,9 @@ def main():
     if num_params > 10_000_000:
         print(f"WARNING: Model has {num_params/1e6:.1f}M params (limit: 10M)")
 
-    # Compile model if on CUDA for speed
-    if device_type == "cuda":
-        model = torch.compile(model)
+    # Use AMP on CUDA for speed
+    use_amp = device_type == "cuda"
+    scaler = torch.amp.GradScaler("cuda") if use_amp else None
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -294,6 +266,7 @@ def main():
 
     print(f"Time budget: {TIME_BUDGET}s")
     print(f"Batch size: {BATCH_SIZE}")
+    print(f"AMP: {use_amp}")
     print(f"Starting training...")
     print()
 
@@ -315,13 +288,23 @@ def main():
             X_batch = X_batch.to(device)
             Y_batch = Y_batch.to(device)
 
-            preds = model(X_batch).squeeze(-1)
-            loss = criterion(preds, Y_batch)
-
-            optimizer.zero_grad(set_to_none=True)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+            if use_amp:
+                with torch.amp.autocast("cuda"):
+                    preds = model(X_batch).squeeze(-1)
+                    loss = criterion(preds, Y_batch)
+                optimizer.zero_grad(set_to_none=True)
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                preds = model(X_batch).squeeze(-1)
+                loss = criterion(preds, Y_batch)
+                optimizer.zero_grad(set_to_none=True)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
 
             if device_type == "cuda":
                 torch.cuda.synchronize()
@@ -356,15 +339,15 @@ def main():
                     end="", flush=True,
                 )
 
-            # Mid-training eval every 600 steps
-            if step > 10 and step % 600 == 0 and total_training_time < TIME_BUDGET * 0.95:
+            # Frequent evals on GPU (fast eval)
+            if step > 10 and step % 400 == 0 and total_training_time < TIME_BUDGET * 0.95:
                 model.eval()
                 mid_results = evaluate_model(model, device, batch_size=BATCH_SIZE)
                 sp = mid_results["val_spearman"]
                 if sp > best_val_spearman:
                     best_val_spearman = sp
                     best_state = {k: v.clone() for k, v in model.state_dict().items()}
-                    print(f"\n  [ckpt] spearman={sp:.4f} (NEW BEST)")
+                    print(f"\n  [ckpt] spearman={sp:.4f} mse={mid_results['val_mse']:.4f} (NEW BEST)")
                 else:
                     print(f"\n  [ckpt] spearman={sp:.4f} (best={best_val_spearman:.4f})")
                 model.train()
