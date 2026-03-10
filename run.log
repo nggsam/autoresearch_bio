@@ -1,0 +1,203 @@
+/Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+Device: mps
+Parameters: 105,314 (0.11M)
+Time budget: 300s
+Batch size: 64
+Starting training...
+
+step 00000 (0.0%) | loss: 0.525238 | lr: 0.00e+00 | epoch: 1 | remaining: 300s    step 00001 (0.0%) | loss: 0.545836 | lr: 0.00e+00 | epoch: 1 | remaining: 300s    step 00002 (0.0%) | loss: 0.531433 | lr: 0.00e+00 | epoch: 1 | remaining: 300s    step 00003 (0.0%) | loss: 0.524744 | lr: 0.00e+00 | epoch: 1 | remaining: 300s    step 00004 (0.0%) | loss: 0.497524 | lr: 0.00e+00 | epoch: 1 | remaining: 300s    step 00100 (0.5%) | loss: 0.370654 | lr: 2.11e-05 | epoch: 3 | remaining: 298s    step 00200 (1.1%) | loss: 0.142867 | lr: 4.28e-05 | epoch: 5 | remaining: 297s    step 00300 (1.7%) | loss: 0.074250 | lr: 6.63e-05 | epoch: 7 | remaining: 295s    step 00400 (2.2%) | loss: 0.063325 | lr: 8.65e-05 | epoch: 9 | remaining: 294s    step 00500 (2.7%) | loss: 0.059559 | lr: 1.07e-04 | epoch: 11 | remaining: 292s    step 00600 (3.1%) | loss: 0.056567 | lr: 1.24e-04 | epoch: 13 | remaining: 291s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.2875 (NEW BEST)
+step 00700 (3.5%) | loss: 0.057767 | lr: 1.41e-04 | epoch: 15 | remaining: 289s    step 00800 (4.0%) | loss: 0.053253 | lr: 1.58e-04 | epoch: 17 | remaining: 288s    step 00900 (4.3%) | loss: 0.052879 | lr: 1.73e-04 | epoch: 19 | remaining: 287s    step 01000 (4.7%) | loss: 0.051799 | lr: 1.88e-04 | epoch: 21 | remaining: 286s    step 01100 (5.0%) | loss: 0.052361 | lr: 2.00e-04 | epoch: 23 | remaining: 285s    step 01200 (5.4%) | loss: 0.048370 | lr: 2.00e-04 | epoch: 25 | remaining: 284s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.4102 (NEW BEST)
+step 01300 (5.9%) | loss: 0.046618 | lr: 2.00e-04 | epoch: 27 | remaining: 282s    step 01400 (6.2%) | loss: 0.034752 | lr: 2.00e-04 | epoch: 29 | remaining: 281s    step 01500 (6.6%) | loss: 0.024456 | lr: 2.00e-04 | epoch: 31 | remaining: 280s    step 01600 (7.1%) | loss: 0.022357 | lr: 2.00e-04 | epoch: 33 | remaining: 279s    step 01700 (7.5%) | loss: 0.022097 | lr: 2.00e-04 | epoch: 35 | remaining: 278s    step 01800 (7.9%) | loss: 0.020906 | lr: 2.00e-04 | epoch: 37 | remaining: 276s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3102 (best=0.4102)
+step 01900 (8.2%) | loss: 0.020557 | lr: 1.99e-04 | epoch: 39 | remaining: 275s    step 02000 (8.5%) | loss: 0.019514 | lr: 1.99e-04 | epoch: 41 | remaining: 274s    step 02100 (8.9%) | loss: 0.018279 | lr: 1.99e-04 | epoch: 43 | remaining: 273s    step 02200 (9.2%) | loss: 0.017325 | lr: 1.99e-04 | epoch: 45 | remaining: 272s    step 02300 (9.7%) | loss: 0.017717 | lr: 1.99e-04 | epoch: 47 | remaining: 271s    step 02400 (10.1%) | loss: 0.017111 | lr: 1.99e-04 | epoch: 49 | remaining: 270s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3253 (best=0.4102)
+step 02500 (10.5%) | loss: 0.017128 | lr: 1.98e-04 | epoch: 51 | remaining: 268s    step 02600 (10.9%) | loss: 0.016481 | lr: 1.98e-04 | epoch: 53 | remaining: 267s    step 02700 (11.2%) | loss: 0.016727 | lr: 1.98e-04 | epoch: 55 | remaining: 266s    step 02800 (11.6%) | loss: 0.016347 | lr: 1.98e-04 | epoch: 57 | remaining: 265s    step 02900 (12.0%) | loss: 0.015659 | lr: 1.97e-04 | epoch: 59 | remaining: 264s    step 03000 (12.3%) | loss: 0.015465 | lr: 1.97e-04 | epoch: 61 | remaining: 263s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3360 (best=0.4102)
+step 03100 (12.7%) | loss: 0.015922 | lr: 1.97e-04 | epoch: 63 | remaining: 262s    step 03200 (13.1%) | loss: 0.015443 | lr: 1.96e-04 | epoch: 65 | remaining: 261s    step 03300 (13.4%) | loss: 0.015528 | lr: 1.96e-04 | epoch: 67 | remaining: 260s    step 03400 (13.8%) | loss: 0.014816 | lr: 1.96e-04 | epoch: 69 | remaining: 259s    step 03500 (14.1%) | loss: 0.014946 | lr: 1.96e-04 | epoch: 71 | remaining: 258s    step 03600 (14.4%) | loss: 0.014398 | lr: 1.95e-04 | epoch: 73 | remaining: 257s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3425 (best=0.4102)
+step 03700 (14.8%) | loss: 0.013992 | lr: 1.95e-04 | epoch: 75 | remaining: 256s    step 03800 (15.2%) | loss: 0.013573 | lr: 1.94e-04 | epoch: 77 | remaining: 254s    step 03900 (15.5%) | loss: 0.014111 | lr: 1.94e-04 | epoch: 79 | remaining: 253s    step 04000 (15.9%) | loss: 0.014746 | lr: 1.94e-04 | epoch: 81 | remaining: 252s    step 04100 (16.3%) | loss: 0.014594 | lr: 1.93e-04 | epoch: 83 | remaining: 251s    step 04200 (16.6%) | loss: 0.013642 | lr: 1.93e-04 | epoch: 85 | remaining: 250s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3407 (best=0.4102)
+step 04300 (17.0%) | loss: 0.013112 | lr: 1.92e-04 | epoch: 87 | remaining: 249s    step 04400 (17.5%) | loss: 0.013341 | lr: 1.92e-04 | epoch: 89 | remaining: 248s    step 04500 (17.8%) | loss: 0.013259 | lr: 1.91e-04 | epoch: 91 | remaining: 247s    step 04600 (18.1%) | loss: 0.013257 | lr: 1.91e-04 | epoch: 93 | remaining: 246s    step 04700 (18.5%) | loss: 0.013605 | lr: 1.90e-04 | epoch: 95 | remaining: 244s    step 04800 (18.8%) | loss: 0.013687 | lr: 1.90e-04 | epoch: 97 | remaining: 244s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3635 (best=0.4102)
+step 04900 (19.3%) | loss: 0.012761 | lr: 1.89e-04 | epoch: 99 | remaining: 242s    step 05000 (19.7%) | loss: 0.012533 | lr: 1.88e-04 | epoch: 101 | remaining: 241s    step 05100 (20.1%) | loss: 0.012196 | lr: 1.88e-04 | epoch: 103 | remaining: 240s    step 05200 (20.4%) | loss: 0.013375 | lr: 1.87e-04 | epoch: 105 | remaining: 239s    step 05300 (20.8%) | loss: 0.011866 | lr: 1.87e-04 | epoch: 107 | remaining: 238s    step 05400 (21.2%) | loss: 0.011974 | lr: 1.86e-04 | epoch: 109 | remaining: 236s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3675 (best=0.4102)
+step 05500 (21.6%) | loss: 0.012489 | lr: 1.85e-04 | epoch: 111 | remaining: 235s    step 05600 (21.9%) | loss: 0.012277 | lr: 1.85e-04 | epoch: 113 | remaining: 234s    step 05700 (22.2%) | loss: 0.012377 | lr: 1.84e-04 | epoch: 115 | remaining: 233s    step 05800 (22.6%) | loss: 0.011755 | lr: 1.83e-04 | epoch: 117 | remaining: 232s    step 05900 (23.0%) | loss: 0.011915 | lr: 1.83e-04 | epoch: 119 | remaining: 231s    step 06000 (23.4%) | loss: 0.012026 | lr: 1.82e-04 | epoch: 121 | remaining: 230s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3726 (best=0.4102)
+step 06100 (23.8%) | loss: 0.011202 | lr: 1.81e-04 | epoch: 123 | remaining: 229s    step 06200 (24.2%) | loss: 0.010929 | lr: 1.80e-04 | epoch: 125 | remaining: 227s    step 06300 (24.7%) | loss: 0.011743 | lr: 1.80e-04 | epoch: 127 | remaining: 226s    step 06400 (25.0%) | loss: 0.011047 | lr: 1.79e-04 | epoch: 129 | remaining: 225s    step 06500 (25.4%) | loss: 0.011190 | lr: 1.78e-04 | epoch: 131 | remaining: 224s    step 06600 (25.8%) | loss: 0.011450 | lr: 1.77e-04 | epoch: 133 | remaining: 223s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3715 (best=0.4102)
+step 06700 (26.2%) | loss: 0.010773 | lr: 1.76e-04 | epoch: 135 | remaining: 221s    step 06800 (26.6%) | loss: 0.010577 | lr: 1.76e-04 | epoch: 137 | remaining: 220s    step 06900 (27.0%) | loss: 0.010460 | lr: 1.75e-04 | epoch: 139 | remaining: 219s    step 07000 (27.3%) | loss: 0.011152 | lr: 1.74e-04 | epoch: 141 | remaining: 218s    step 07100 (27.7%) | loss: 0.011078 | lr: 1.73e-04 | epoch: 143 | remaining: 217s    step 07200 (28.2%) | loss: 0.011406 | lr: 1.72e-04 | epoch: 145 | remaining: 215s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3709 (best=0.4102)
+step 07300 (28.6%) | loss: 0.011576 | lr: 1.71e-04 | epoch: 147 | remaining: 214s    step 07400 (28.9%) | loss: 0.011697 | lr: 1.70e-04 | epoch: 149 | remaining: 213s    step 07500 (29.3%) | loss: 0.009492 | lr: 1.69e-04 | epoch: 151 | remaining: 212s    step 07600 (29.6%) | loss: 0.010280 | lr: 1.69e-04 | epoch: 153 | remaining: 211s    step 07700 (30.1%) | loss: 0.010671 | lr: 1.67e-04 | epoch: 155 | remaining: 210s    step 07800 (30.6%) | loss: 0.010513 | lr: 1.66e-04 | epoch: 157 | remaining: 208s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3723 (best=0.4102)
+step 07900 (31.0%) | loss: 0.010152 | lr: 1.65e-04 | epoch: 159 | remaining: 207s    step 08000 (31.4%) | loss: 0.009808 | lr: 1.64e-04 | epoch: 161 | remaining: 206s    step 08100 (31.6%) | loss: 0.010296 | lr: 1.64e-04 | epoch: 163 | remaining: 205s    step 08200 (32.0%) | loss: 0.009871 | lr: 1.63e-04 | epoch: 165 | remaining: 204s    step 08300 (32.4%) | loss: 0.010032 | lr: 1.62e-04 | epoch: 167 | remaining: 203s    step 08400 (32.7%) | loss: 0.010271 | lr: 1.61e-04 | epoch: 169 | remaining: 202s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3799 (best=0.4102)
+step 08500 (33.1%) | loss: 0.010335 | lr: 1.60e-04 | epoch: 171 | remaining: 201s    step 08600 (33.5%) | loss: 0.009575 | lr: 1.59e-04 | epoch: 173 | remaining: 200s    step 08700 (33.9%) | loss: 0.010264 | lr: 1.58e-04 | epoch: 175 | remaining: 198s    step 08800 (34.3%) | loss: 0.009916 | lr: 1.57e-04 | epoch: 177 | remaining: 197s    step 08900 (34.6%) | loss: 0.009796 | lr: 1.56e-04 | epoch: 179 | remaining: 196s    step 09000 (35.0%) | loss: 0.009200 | lr: 1.55e-04 | epoch: 181 | remaining: 195s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3778 (best=0.4102)
+step 09100 (35.3%) | loss: 0.008827 | lr: 1.54e-04 | epoch: 183 | remaining: 194s    step 09200 (35.7%) | loss: 0.009763 | lr: 1.53e-04 | epoch: 185 | remaining: 193s    step 09300 (36.0%) | loss: 0.009884 | lr: 1.52e-04 | epoch: 187 | remaining: 192s    step 09400 (36.3%) | loss: 0.010256 | lr: 1.51e-04 | epoch: 189 | remaining: 191s    step 09500 (36.6%) | loss: 0.009439 | lr: 1.50e-04 | epoch: 191 | remaining: 190s    step 09600 (36.9%) | loss: 0.008804 | lr: 1.49e-04 | epoch: 193 | remaining: 189s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3838 (best=0.4102)
+step 09700 (37.3%) | loss: 0.009306 | lr: 1.48e-04 | epoch: 195 | remaining: 188s    step 09800 (37.7%) | loss: 0.008860 | lr: 1.47e-04 | epoch: 197 | remaining: 187s    step 09900 (38.2%) | loss: 0.009244 | lr: 1.46e-04 | epoch: 199 | remaining: 185s    step 10000 (38.5%) | loss: 0.009920 | lr: 1.45e-04 | epoch: 201 | remaining: 184s    step 10100 (38.9%) | loss: 0.009442 | lr: 1.44e-04 | epoch: 203 | remaining: 183s    step 10200 (39.2%) | loss: 0.009236 | lr: 1.43e-04 | epoch: 205 | remaining: 182s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3827 (best=0.4102)
+step 10300 (39.6%) | loss: 0.008817 | lr: 1.42e-04 | epoch: 207 | remaining: 181s    step 10400 (40.0%) | loss: 0.009024 | lr: 1.40e-04 | epoch: 209 | remaining: 180s    step 10500 (40.3%) | loss: 0.009010 | lr: 1.39e-04 | epoch: 211 | remaining: 179s    step 10600 (40.8%) | loss: 0.008774 | lr: 1.38e-04 | epoch: 213 | remaining: 178s    step 10700 (41.2%) | loss: 0.009266 | lr: 1.36e-04 | epoch: 215 | remaining: 176s    step 10800 (41.6%) | loss: 0.008598 | lr: 1.35e-04 | epoch: 217 | remaining: 175s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3836 (best=0.4102)
+step 10900 (42.0%) | loss: 0.008167 | lr: 1.34e-04 | epoch: 219 | remaining: 174s    step 11000 (42.4%) | loss: 0.008733 | lr: 1.33e-04 | epoch: 221 | remaining: 173s    step 11100 (42.7%) | loss: 0.008944 | lr: 1.32e-04 | epoch: 223 | remaining: 172s    step 11200 (43.1%) | loss: 0.009117 | lr: 1.31e-04 | epoch: 225 | remaining: 171s    step 11300 (43.5%) | loss: 0.008459 | lr: 1.29e-04 | epoch: 227 | remaining: 170s    step 11400 (43.8%) | loss: 0.009010 | lr: 1.28e-04 | epoch: 229 | remaining: 169s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3871 (best=0.4102)
+step 11500 (44.2%) | loss: 0.008630 | lr: 1.27e-04 | epoch: 231 | remaining: 167s    step 11600 (44.6%) | loss: 0.007994 | lr: 1.26e-04 | epoch: 233 | remaining: 166s    step 11700 (45.0%) | loss: 0.008062 | lr: 1.25e-04 | epoch: 235 | remaining: 165s    step 11800 (45.4%) | loss: 0.008171 | lr: 1.23e-04 | epoch: 237 | remaining: 164s    step 11900 (45.9%) | loss: 0.007987 | lr: 1.22e-04 | epoch: 239 | remaining: 162s    step 12000 (46.2%) | loss: 0.007779 | lr: 1.21e-04 | epoch: 241 | remaining: 161s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3884 (best=0.4102)
+step 12100 (46.6%) | loss: 0.007531 | lr: 1.19e-04 | epoch: 243 | remaining: 160s    step 12200 (46.9%) | loss: 0.007768 | lr: 1.18e-04 | epoch: 245 | remaining: 159s    step 12300 (47.2%) | loss: 0.008272 | lr: 1.17e-04 | epoch: 247 | remaining: 158s    step 12400 (47.6%) | loss: 0.008008 | lr: 1.16e-04 | epoch: 249 | remaining: 157s    step 12500 (48.0%) | loss: 0.007475 | lr: 1.15e-04 | epoch: 251 | remaining: 156s    step 12600 (48.3%) | loss: 0.007994 | lr: 1.14e-04 | epoch: 253 | remaining: 155s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3846 (best=0.4102)
+step 12700 (48.7%) | loss: 0.007542 | lr: 1.13e-04 | epoch: 255 | remaining: 154s    step 12800 (49.0%) | loss: 0.008383 | lr: 1.11e-04 | epoch: 257 | remaining: 153s    step 12900 (49.4%) | loss: 0.006858 | lr: 1.10e-04 | epoch: 259 | remaining: 152s    step 13000 (49.8%) | loss: 0.007742 | lr: 1.09e-04 | epoch: 261 | remaining: 151s    step 13100 (50.1%) | loss: 0.007170 | lr: 1.08e-04 | epoch: 263 | remaining: 150s    step 13200 (50.5%) | loss: 0.007913 | lr: 1.07e-04 | epoch: 265 | remaining: 149s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3860 (best=0.4102)
+step 13300 (50.9%) | loss: 0.007475 | lr: 1.05e-04 | epoch: 267 | remaining: 147s    step 13400 (51.2%) | loss: 0.007954 | lr: 1.04e-04 | epoch: 269 | remaining: 147s    step 13500 (51.5%) | loss: 0.007148 | lr: 1.03e-04 | epoch: 271 | remaining: 146s    step 13600 (51.9%) | loss: 0.007463 | lr: 1.02e-04 | epoch: 273 | remaining: 144s    step 13700 (52.3%) | loss: 0.007922 | lr: 1.01e-04 | epoch: 275 | remaining: 143s    step 13800 (52.8%) | loss: 0.006999 | lr: 9.90e-05 | epoch: 277 | remaining: 142s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3843 (best=0.4102)
+step 13900 (53.2%) | loss: 0.007316 | lr: 9.77e-05 | epoch: 279 | remaining: 140s    step 14000 (53.5%) | loss: 0.006973 | lr: 9.67e-05 | epoch: 281 | remaining: 139s    step 14100 (53.8%) | loss: 0.007736 | lr: 9.57e-05 | epoch: 283 | remaining: 139s    step 14200 (54.2%) | loss: 0.007565 | lr: 9.44e-05 | epoch: 285 | remaining: 137s    step 14300 (54.6%) | loss: 0.007756 | lr: 9.32e-05 | epoch: 287 | remaining: 136s    step 14400 (54.9%) | loss: 0.007398 | lr: 9.22e-05 | epoch: 289 | remaining: 135s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3912 (best=0.4102)
+step 14500 (55.2%) | loss: 0.007415 | lr: 9.10e-05 | epoch: 291 | remaining: 134s    step 14600 (55.5%) | loss: 0.006871 | lr: 9.00e-05 | epoch: 293 | remaining: 133s    step 14700 (55.9%) | loss: 0.007289 | lr: 8.88e-05 | epoch: 295 | remaining: 132s    step 14800 (56.2%) | loss: 0.006922 | lr: 8.78e-05 | epoch: 297 | remaining: 131s    step 14900 (56.6%) | loss: 0.007136 | lr: 8.65e-05 | epoch: 299 | remaining: 130s    step 15000 (56.9%) | loss: 0.006726 | lr: 8.53e-05 | epoch: 301 | remaining: 129s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3866 (best=0.4102)
+step 15100 (57.4%) | loss: 0.006776 | lr: 8.38e-05 | epoch: 303 | remaining: 128s    step 15200 (57.8%) | loss: 0.007061 | lr: 8.26e-05 | epoch: 305 | remaining: 127s    step 15300 (58.1%) | loss: 0.007425 | lr: 8.15e-05 | epoch: 307 | remaining: 126s    step 15400 (58.5%) | loss: 0.006837 | lr: 8.03e-05 | epoch: 309 | remaining: 125s    step 15500 (58.8%) | loss: 0.006573 | lr: 7.92e-05 | epoch: 311 | remaining: 123s    step 15600 (59.2%) | loss: 0.006767 | lr: 7.82e-05 | epoch: 313 | remaining: 123s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3882 (best=0.4102)
+step 15700 (59.6%) | loss: 0.007492 | lr: 7.67e-05 | epoch: 315 | remaining: 121s    step 15800 (60.0%) | loss: 0.006601 | lr: 7.54e-05 | epoch: 317 | remaining: 120s    step 15900 (60.3%) | loss: 0.006720 | lr: 7.44e-05 | epoch: 319 | remaining: 119s    step 16000 (60.7%) | loss: 0.007389 | lr: 7.33e-05 | epoch: 321 | remaining: 118s    step 16100 (61.0%) | loss: 0.006599 | lr: 7.21e-05 | epoch: 323 | remaining: 117s    step 16200 (61.4%) | loss: 0.006612 | lr: 7.10e-05 | epoch: 325 | remaining: 116s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3850 (best=0.4102)
+step 16300 (61.8%) | loss: 0.006242 | lr: 6.99e-05 | epoch: 327 | remaining: 115s    step 16400 (62.2%) | loss: 0.006607 | lr: 6.85e-05 | epoch: 329 | remaining: 113s    step 16500 (62.5%) | loss: 0.006973 | lr: 6.76e-05 | epoch: 331 | remaining: 113s    step 16600 (62.9%) | loss: 0.006449 | lr: 6.64e-05 | epoch: 333 | remaining: 111s    step 16700 (63.2%) | loss: 0.006709 | lr: 6.52e-05 | epoch: 335 | remaining: 110s    step 16800 (63.6%) | loss: 0.006538 | lr: 6.42e-05 | epoch: 337 | remaining: 109s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3834 (best=0.4102)
+step 16900 (63.9%) | loss: 0.007107 | lr: 6.32e-05 | epoch: 339 | remaining: 108s    step 17000 (64.3%) | loss: 0.006340 | lr: 6.18e-05 | epoch: 341 | remaining: 107s    step 17100 (64.8%) | loss: 0.006497 | lr: 6.04e-05 | epoch: 343 | remaining: 106s    step 17200 (65.1%) | loss: 0.006675 | lr: 5.95e-05 | epoch: 345 | remaining: 105s    step 17300 (65.5%) | loss: 0.007011 | lr: 5.82e-05 | epoch: 347 | remaining: 103s    step 17400 (65.9%) | loss: 0.007209 | lr: 5.70e-05 | epoch: 349 | remaining: 102s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3851 (best=0.4102)
+step 17500 (66.4%) | loss: 0.006372 | lr: 5.57e-05 | epoch: 351 | remaining: 101s    step 17600 (66.7%) | loss: 0.006179 | lr: 5.47e-05 | epoch: 353 | remaining: 100s    step 17700 (67.2%) | loss: 0.005769 | lr: 5.34e-05 | epoch: 355 | remaining: 98s    step 17800 (67.5%) | loss: 0.006636 | lr: 5.24e-05 | epoch: 357 | remaining: 97s    step 17900 (67.8%) | loss: 0.006691 | lr: 5.14e-05 | epoch: 359 | remaining: 96s    step 18000 (68.3%) | loss: 0.006227 | lr: 5.02e-05 | epoch: 361 | remaining: 95s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3836 (best=0.4102)
+step 18100 (68.6%) | loss: 0.006508 | lr: 4.92e-05 | epoch: 363 | remaining: 94s    step 18200 (68.9%) | loss: 0.006481 | lr: 4.84e-05 | epoch: 365 | remaining: 93s    step 18300 (69.3%) | loss: 0.006647 | lr: 4.74e-05 | epoch: 367 | remaining: 92s    step 18400 (69.6%) | loss: 0.006442 | lr: 4.65e-05 | epoch: 369 | remaining: 91s    step 18500 (69.9%) | loss: 0.006847 | lr: 4.56e-05 | epoch: 371 | remaining: 90s    step 18600 (70.4%) | loss: 0.006103 | lr: 4.43e-05 | epoch: 373 | remaining: 89s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3850 (best=0.4102)
+step 18700 (70.7%) | loss: 0.006231 | lr: 4.33e-05 | epoch: 375 | remaining: 88s    step 18800 (71.1%) | loss: 0.006265 | lr: 4.23e-05 | epoch: 377 | remaining: 87s    step 18900 (71.4%) | loss: 0.006674 | lr: 4.15e-05 | epoch: 379 | remaining: 86s    step 19000 (71.7%) | loss: 0.006868 | lr: 4.07e-05 | epoch: 381 | remaining: 85s    step 19100 (72.0%) | loss: 0.006013 | lr: 3.99e-05 | epoch: 383 | remaining: 84s    step 19200 (72.4%) | loss: 0.006763 | lr: 3.90e-05 | epoch: 385 | remaining: 83s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3822 (best=0.4102)
+step 19300 (72.6%) | loss: 0.006371 | lr: 3.82e-05 | epoch: 387 | remaining: 82s    step 19400 (72.9%) | loss: 0.006065 | lr: 3.74e-05 | epoch: 389 | remaining: 81s    step 19500 (73.2%) | loss: 0.006010 | lr: 3.67e-05 | epoch: 391 | remaining: 80s    step 19600 (73.6%) | loss: 0.006125 | lr: 3.58e-05 | epoch: 393 | remaining: 79s    step 19700 (73.9%) | loss: 0.006385 | lr: 3.50e-05 | epoch: 395 | remaining: 78s    step 19800 (74.2%) | loss: 0.006421 | lr: 3.42e-05 | epoch: 397 | remaining: 77s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3836 (best=0.4102)
+step 19900 (74.6%) | loss: 0.006527 | lr: 3.33e-05 | epoch: 399 | remaining: 76s    step 20000 (74.9%) | loss: 0.005641 | lr: 3.25e-05 | epoch: 401 | remaining: 75s    step 20100 (75.3%) | loss: 0.006364 | lr: 3.16e-05 | epoch: 403 | remaining: 74s    step 20200 (75.6%) | loss: 0.006697 | lr: 3.08e-05 | epoch: 405 | remaining: 73s    step 20300 (75.9%) | loss: 0.006351 | lr: 3.01e-05 | epoch: 407 | remaining: 72s    step 20400 (76.3%) | loss: 0.006463 | lr: 2.93e-05 | epoch: 409 | remaining: 71s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3841 (best=0.4102)
+step 20500 (76.6%) | loss: 0.006428 | lr: 2.85e-05 | epoch: 411 | remaining: 70s    step 20600 (76.9%) | loss: 0.005968 | lr: 2.78e-05 | epoch: 413 | remaining: 69s    step 20700 (77.2%) | loss: 0.006314 | lr: 2.70e-05 | epoch: 415 | remaining: 68s    step 20800 (77.6%) | loss: 0.005908 | lr: 2.62e-05 | epoch: 417 | remaining: 67s    step 20900 (77.9%) | loss: 0.005962 | lr: 2.56e-05 | epoch: 419 | remaining: 66s    step 21000 (78.3%) | loss: 0.006681 | lr: 2.48e-05 | epoch: 421 | remaining: 65s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3837 (best=0.4102)
+step 21100 (78.6%) | loss: 0.006201 | lr: 2.39e-05 | epoch: 423 | remaining: 64s    step 21200 (78.9%) | loss: 0.005920 | lr: 2.33e-05 | epoch: 425 | remaining: 63s    step 21300 (79.2%) | loss: 0.006257 | lr: 2.27e-05 | epoch: 427 | remaining: 62s    step 21400 (79.5%) | loss: 0.006031 | lr: 2.20e-05 | epoch: 429 | remaining: 61s    step 21500 (79.9%) | loss: 0.006353 | lr: 2.13e-05 | epoch: 431 | remaining: 60s    step 21600 (80.2%) | loss: 0.006153 | lr: 2.08e-05 | epoch: 433 | remaining: 60s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3828 (best=0.4102)
+step 21700 (80.5%) | loss: 0.006079 | lr: 2.02e-05 | epoch: 435 | remaining: 59s    step 21800 (80.8%) | loss: 0.005880 | lr: 1.95e-05 | epoch: 437 | remaining: 58s    step 21900 (81.1%) | loss: 0.006567 | lr: 1.89e-05 | epoch: 439 | remaining: 57s    step 22000 (81.4%) | loss: 0.006824 | lr: 1.83e-05 | epoch: 441 | remaining: 56s    step 22100 (81.7%) | loss: 0.005817 | lr: 1.77e-05 | epoch: 443 | remaining: 55s    step 22200 (82.0%) | loss: 0.005760 | lr: 1.72e-05 | epoch: 445 | remaining: 54s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3830 (best=0.4102)
+step 22300 (82.3%) | loss: 0.006086 | lr: 1.66e-05 | epoch: 447 | remaining: 53s    step 22400 (82.6%) | loss: 0.006116 | lr: 1.61e-05 | epoch: 449 | remaining: 52s    step 22500 (82.9%) | loss: 0.005685 | lr: 1.55e-05 | epoch: 451 | remaining: 51s    step 22600 (83.2%) | loss: 0.006151 | lr: 1.50e-05 | epoch: 453 | remaining: 50s    step 22700 (83.5%) | loss: 0.006188 | lr: 1.45e-05 | epoch: 455 | remaining: 49s    step 22800 (83.8%) | loss: 0.005875 | lr: 1.40e-05 | epoch: 457 | remaining: 49s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3829 (best=0.4102)
+step 22900 (84.1%) | loss: 0.006557 | lr: 1.35e-05 | epoch: 459 | remaining: 48s    step 23000 (84.4%) | loss: 0.006517 | lr: 1.30e-05 | epoch: 461 | remaining: 47s    step 23100 (84.8%) | loss: 0.005883 | lr: 1.24e-05 | epoch: 463 | remaining: 46s    step 23200 (85.1%) | loss: 0.006294 | lr: 1.19e-05 | epoch: 465 | remaining: 45s    step 23300 (85.4%) | loss: 0.006513 | lr: 1.15e-05 | epoch: 467 | remaining: 44s    step 23400 (85.6%) | loss: 0.006005 | lr: 1.11e-05 | epoch: 469 | remaining: 43s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3827 (best=0.4102)
+step 23500 (85.9%) | loss: 0.006174 | lr: 1.06e-05 | epoch: 471 | remaining: 42s    step 23600 (86.2%) | loss: 0.006311 | lr: 1.02e-05 | epoch: 473 | remaining: 41s    step 23700 (86.5%) | loss: 0.005965 | lr: 9.80e-06 | epoch: 475 | remaining: 40s    step 23800 (86.8%) | loss: 0.006295 | lr: 9.40e-06 | epoch: 477 | remaining: 40s    step 23900 (87.1%) | loss: 0.006138 | lr: 9.01e-06 | epoch: 479 | remaining: 39s    step 24000 (87.3%) | loss: 0.005926 | lr: 8.63e-06 | epoch: 481 | remaining: 38s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3828 (best=0.4102)
+step 24100 (87.6%) | loss: 0.005992 | lr: 8.24e-06 | epoch: 483 | remaining: 37s    step 24200 (87.9%) | loss: 0.005826 | lr: 7.86e-06 | epoch: 485 | remaining: 36s    step 24300 (88.2%) | loss: 0.005939 | lr: 7.50e-06 | epoch: 487 | remaining: 35s    step 24400 (88.5%) | loss: 0.005930 | lr: 7.14e-06 | epoch: 489 | remaining: 34s    step 24500 (88.8%) | loss: 0.005728 | lr: 6.80e-06 | epoch: 491 | remaining: 34s    step 24600 (89.1%) | loss: 0.005991 | lr: 6.46e-06 | epoch: 493 | remaining: 33s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3828 (best=0.4102)
+step 24700 (89.4%) | loss: 0.005475 | lr: 6.11e-06 | epoch: 495 | remaining: 32s    step 24800 (89.7%) | loss: 0.005521 | lr: 5.80e-06 | epoch: 497 | remaining: 31s    step 24900 (89.9%) | loss: 0.005697 | lr: 5.50e-06 | epoch: 499 | remaining: 30s    step 25000 (90.2%) | loss: 0.005972 | lr: 5.20e-06 | epoch: 501 | remaining: 29s    step 25100 (90.5%) | loss: 0.005918 | lr: 4.91e-06 | epoch: 503 | remaining: 29s    step 25200 (90.8%) | loss: 0.006187 | lr: 4.61e-06 | epoch: 505 | remaining: 28s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3828 (best=0.4102)
+step 25300 (91.1%) | loss: 0.006062 | lr: 4.31e-06 | epoch: 507 | remaining: 27s    step 25400 (91.4%) | loss: 0.005955 | lr: 4.04e-06 | epoch: 509 | remaining: 26s    step 25500 (91.7%) | loss: 0.005835 | lr: 3.77e-06 | epoch: 511 | remaining: 25s    step 25600 (92.0%) | loss: 0.005508 | lr: 3.51e-06 | epoch: 513 | remaining: 24s    step 25700 (92.2%) | loss: 0.006226 | lr: 3.27e-06 | epoch: 515 | remaining: 23s    step 25800 (92.6%) | loss: 0.006006 | lr: 3.01e-06 | epoch: 517 | remaining: 22s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3822 (best=0.4102)
+step 25900 (92.9%) | loss: 0.005916 | lr: 2.76e-06 | epoch: 519 | remaining: 21s    step 26000 (93.2%) | loss: 0.005738 | lr: 2.54e-06 | epoch: 521 | remaining: 20s    step 26100 (93.5%) | loss: 0.005795 | lr: 2.33e-06 | epoch: 523 | remaining: 20s    step 26200 (93.8%) | loss: 0.005963 | lr: 2.12e-06 | epoch: 525 | remaining: 19s    step 26300 (94.1%) | loss: 0.006321 | lr: 2.00e-06 | epoch: 527 | remaining: 18s    step 26400 (94.4%) | loss: 0.006235 | lr: 2.00e-06 | epoch: 529 | remaining: 17s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+  [ckpt] spearman=0.3821 (best=0.4102)
+step 26500 (94.9%) | loss: 0.005827 | lr: 2.00e-06 | epoch: 531 | remaining: 15s    step 26600 (95.3%) | loss: 0.005999 | lr: 2.00e-06 | epoch: 533 | remaining: 14s    step 26700 (95.6%) | loss: 0.005846 | lr: 2.00e-06 | epoch: 535 | remaining: 13s    step 26800 (96.0%) | loss: 0.006178 | lr: 2.00e-06 | epoch: 537 | remaining: 12s    step 26900 (96.3%) | loss: 0.005722 | lr: 2.00e-06 | epoch: 539 | remaining: 11s    step 27000 (96.6%) | loss: 0.006239 | lr: 2.00e-06 | epoch: 541 | remaining: 10s    step 27100 (97.0%) | loss: 0.006289 | lr: 2.00e-06 | epoch: 543 | remaining: 9s    step 27200 (97.4%) | loss: 0.006080 | lr: 2.00e-06 | epoch: 545 | remaining: 8s    step 27300 (97.8%) | loss: 0.006522 | lr: 2.00e-06 | epoch: 547 | remaining: 7s    step 27400 (98.1%) | loss: 0.006114 | lr: 2.00e-06 | epoch: 549 | remaining: 6s    step 27500 (98.5%) | loss: 0.006031 | lr: 2.00e-06 | epoch: 551 | remaining: 5s    step 27600 (98.9%) | loss: 0.006065 | lr: 2.00e-06 | epoch: 553 | remaining: 3s    step 27700 (99.2%) | loss: 0.006081 | lr: 2.00e-06 | epoch: 555 | remaining: 2s    step 27800 (99.6%) | loss: 0.006401 | lr: 2.00e-06 | epoch: 557 | remaining: 1s    step 27900 (100.0%) | loss: 0.006591 | lr: 2.00e-06 | epoch: 559 | remaining: 0s    /Users/samng/miniforge3/lib/python3.12/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+
+Training complete. 27909 steps, 559 epochs.
+Restored best checkpoint (val_spearman=0.4102)
+Running final validation evaluation...
+---
+val_spearman:     0.410166
+val_mse:          0.098835
+val_pearson:      0.331670
+val_samples:      795
+training_seconds: 300.0
+total_seconds:    320.0
+peak_memory_mb:   3.7
+num_steps:        27909
+num_params_M:     0.1
+n_layer:          3
+n_head:           0
+n_embd:           32
