@@ -1,1 +1,5 @@
-*.pyc\n__pycache__/\n*.egg-info/\ndist/\nbuild/\n.env\nvenv/\nrun.log\nresults.tsv\n.DS_Store
+__pycache__/
+*.pyc
+*.log
+*.tsv
+.DS_Store
