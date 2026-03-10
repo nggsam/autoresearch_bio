@@ -1,6 +1,7 @@
 """
 GFP fluorescence prediction training script.
-Baseline: CNN + attention model for sequence → fluorescence regression.
+Exp3: 2.6M model with stronger regularization.
+Higher dropout (0.25), weight decay (0.08), warmup (10%), position masking (3%).
 
 Usage: python train.py
 """
@@ -27,19 +28,20 @@ else:
 print(f"Device: {device}")
 
 # Architecture
-N_EMBD = 64
-N_CNN_CHANNELS = 128
-N_CNN_LAYERS = 4
-N_ATTN_HEADS = 4
-N_HIDDEN = 256
-DROPOUT = 0.2        # less dropout — bigger dataset (54k vs 4k)
-BATCH_SIZE = 128     # bigger batch on GPU
-EMB_NOISE = 0.01
+N_EMBD = 128
+N_CNN_CHANNELS = 256
+N_CNN_LAYERS = 5
+N_ATTN_HEADS = 8
+N_HIDDEN = 512
+DROPOUT = 0.25
+BATCH_SIZE = 128
+EMB_NOISE = 0.015
+MASK_PROB = 0.03
 
 # Optimization
-LEARNING_RATE = 3e-4
-WEIGHT_DECAY = 0.05
-WARMUP_RATIO = 0.05
+LEARNING_RATE = 2e-4
+WEIGHT_DECAY = 0.08
+WARMUP_RATIO = 0.10
 ADAM_BETAS = (0.9, 0.999)
 
 
@@ -108,6 +110,9 @@ class GFPPredictor(nn.Module):
 
         if self.training and EMB_NOISE > 0:
             emb = emb + torch.randn_like(emb) * EMB_NOISE
+        if self.training and MASK_PROB > 0:
+            mask = torch.rand(B, seq.size(1), 1, device=emb.device) > MASK_PROB
+            emb = emb * mask
 
         # CNN
         cnn_in = self.input_proj(emb.permute(0, 2, 1))
