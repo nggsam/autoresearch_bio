@@ -1,12 +1,15 @@
 """
 GFP fluorescence prediction training script.
-Exp3: 2.6M model with stronger regularization.
-Higher dropout (0.25), weight decay (0.08), warmup (10%), position masking (3%).
+Exp7: Exact Exp2 architecture + EMA model averaging + early stopping focus.
+
+Hypothesis: Exp2 architecture is optimal. The only issue is overfitting after
+epoch ~25. Instead of fighting overfitting with regularization (which hurts peak),
+use EMA to stabilize the model as it trains.
 
 Usage: python train.py
 """
 
-import os, gc, time, math
+import os, gc, time, math, copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,32 +20,28 @@ from prepare import (
 
 # Device setup
 if torch.cuda.is_available():
-    device = torch.device("cuda")
-    device_type = "cuda"
+    device = torch.device("cuda"); device_type = "cuda"
 elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-    device = torch.device("mps")
-    device_type = "mps"
+    device = torch.device("mps"); device_type = "mps"
 else:
-    device = torch.device("cpu")
-    device_type = "cpu"
+    device = torch.device("cpu"); device_type = "cpu"
 print(f"Device: {device}")
 
-# Architecture
+# Architecture — EXACT Exp2 (proven best)
 N_EMBD = 128
 N_CNN_CHANNELS = 256
 N_CNN_LAYERS = 5
 N_ATTN_HEADS = 8
 N_HIDDEN = 512
-DROPOUT = 0.25
+DROPOUT = 0.15
 BATCH_SIZE = 128
 EMB_NOISE = 0.015
-MASK_PROB = 0.03
+EMA_DECAY = 0.999   # exponential moving average
 
-# Optimization
-LEARNING_RATE = 2e-4
-WEIGHT_DECAY = 0.08
-WARMUP_RATIO = 0.10
-ADAM_BETAS = (0.9, 0.999)
+# Optimization — EXACT Exp2
+LEARNING_RATE = 3e-4
+WEIGHT_DECAY = 0.03
+WARMUP_RATIO = 0.05
 
 
 class ResidualConvBlock(nn.Module):
@@ -110,11 +109,7 @@ class GFPPredictor(nn.Module):
 
         if self.training and EMB_NOISE > 0:
             emb = emb + torch.randn_like(emb) * EMB_NOISE
-        if self.training and MASK_PROB > 0:
-            mask = torch.rand(B, seq.size(1), 1, device=emb.device) > MASK_PROB
-            emb = emb * mask
 
-        # CNN
         cnn_in = self.input_proj(emb.permute(0, 2, 1))
         for block in self.cnn_blocks:
             cnn_in = block(cnn_in)
@@ -122,11 +117,9 @@ class GFPPredictor(nn.Module):
         cnn_mean = cnn_in.mean(dim=2)
         cnn_max = cnn_in.max(dim=2).values
 
-        # Attention
         query = self.attn_query.expand(B, -1, -1)
         attn_out, _ = self.mha(query, emb, emb)
         attn_pooled = attn_out.squeeze(1)
-
         global_mean = emb.mean(dim=1)
 
         combined = torch.cat([cnn_mean, cnn_max, attn_pooled, global_mean], dim=-1)
@@ -145,28 +138,29 @@ def main():
     num_params = model.num_params()
     print(f"Parameters: {num_params:,} ({num_params/1e6:.2f}M)")
 
+    # EMA model
+    ema_state = {k: v.clone() for k, v in model.state_dict().items()}
+
     use_amp = device_type == "cuda"
     scaler = torch.amp.GradScaler("cuda") if use_amp else None
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY, betas=ADAM_BETAS)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
     criterion = nn.HuberLoss(delta=1.0)
     train_loader = make_dataloader("train", BATCH_SIZE, shuffle=True)
 
     def get_lr(progress):
         if progress < WARMUP_RATIO:
             return progress / WARMUP_RATIO if WARMUP_RATIO > 0 else 1.0
-        cosine_progress = (progress - WARMUP_RATIO) / (1.0 - WARMUP_RATIO)
-        return max(0.01, 0.5 * (1.0 + math.cos(math.pi * cosine_progress)))
+        cp = (progress - WARMUP_RATIO) / (1.0 - WARMUP_RATIO)
+        return max(0.01, 0.5 * (1.0 + math.cos(math.pi * cp)))
 
-    print(f"Time budget: {TIME_BUDGET}s | Batch: {BATCH_SIZE} | AMP: {use_amp}")
+    print(f"Time budget: {TIME_BUDGET}s | Batch: {BATCH_SIZE} | EMA decay: {EMA_DECAY}")
     print()
 
     total_training_time = 0.0
-    step = 0
-    epoch = 0
-    smooth_loss = 0.0
-    best_val_spearman = -1.0
-    best_state = None
+    step = 0; epoch = 0; smooth_loss = 0.0
+    best_val_spearman = -1.0; best_state = None
+    best_ema_spearman = -1.0; best_ema_state = None
 
     model.train()
     while True:
@@ -193,6 +187,11 @@ def main():
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
 
+            # Update EMA
+            with torch.no_grad():
+                for k, v in model.state_dict().items():
+                    ema_state[k] = EMA_DECAY * ema_state[k] + (1 - EMA_DECAY) * v
+
             if device_type == "cuda": torch.cuda.synchronize()
             elif device_type == "mps": torch.mps.synchronize()
 
@@ -211,6 +210,7 @@ def main():
                 print(f"\rstep {step:05d} ({100*progress:.1f}%) | loss: {debiased:.6f} | lr: {LEARNING_RATE*lr_mult:.2e} | epoch: {epoch} | remaining: {max(0,TIME_BUDGET-total_training_time):.0f}s    ", end="", flush=True)
 
             if step > 10 and step % 400 == 0 and total_training_time < TIME_BUDGET * 0.95:
+                # Eval main model
                 model.eval()
                 r = evaluate_model(model, device, batch_size=BATCH_SIZE)
                 sp = r["val_spearman"]
@@ -220,6 +220,19 @@ def main():
                     print(f"\n  [ckpt] spearman={sp:.4f} mse={r['val_mse']:.4f} (NEW BEST)")
                 else:
                     print(f"\n  [ckpt] spearman={sp:.4f} (best={best_val_spearman:.4f})")
+
+                # Eval EMA model
+                orig_state = {k: v.clone() for k, v in model.state_dict().items()}
+                model.load_state_dict(ema_state)
+                r_ema = evaluate_model(model, device, batch_size=BATCH_SIZE)
+                sp_ema = r_ema["val_spearman"]
+                if sp_ema > best_ema_spearman:
+                    best_ema_spearman = sp_ema
+                    best_ema_state = {k: v.clone() for k, v in ema_state.items()}
+                    print(f"  [EMA] spearman={sp_ema:.4f} (NEW BEST EMA)")
+                else:
+                    print(f"  [EMA] spearman={sp_ema:.4f} (best={best_ema_spearman:.4f})")
+                model.load_state_dict(orig_state)
                 model.train()
 
             if loss_f > 100 or math.isnan(loss_f):
@@ -230,19 +243,19 @@ def main():
         if step > 5 and total_training_time >= TIME_BUDGET: break
 
     print(f"\nTraining complete. {step} steps, {epoch} epochs.")
+    print(f"Best checkpoint:  spearman={best_val_spearman:.4f}")
+    print(f"Best EMA:         spearman={best_ema_spearman:.4f}")
 
-    if best_state is not None:
+    # Pick the best overall
+    if best_ema_spearman > best_val_spearman and best_ema_state is not None:
+        model.load_state_dict(best_ema_state)
+        print("=> Using EMA model (better)")
+    elif best_state is not None:
         model.load_state_dict(best_state)
-        print(f"Restored best checkpoint (val_spearman={best_val_spearman:.4f})")
+        print("=> Using checkpoint model (better)")
 
     results = evaluate_model(model, device, batch_size=BATCH_SIZE)
-
-    peak_mb = 0.0
-    if device_type == "cuda": peak_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
-    elif device_type == "mps":
-        try: peak_mb = torch.mps.current_allocated_memory() / 1024 / 1024
-        except: pass
-
+    peak_mb = torch.cuda.max_memory_allocated() / 1024 / 1024 if device_type == "cuda" else 0.0
     t_end = time.time()
     print("---")
     print(f"val_spearman:     {results['val_spearman']:.6f}")
